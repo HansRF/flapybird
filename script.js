@@ -59,7 +59,7 @@ let birdFrame = 0;
 const pipeGap = 150;
 let pipeInterval = 0;
 
-// Start the game by tapping/clicking anywhere
+// Fungsi utama melompat
 function handleJump() {
   if (!gameStarted) {
     gameStarted = true;
@@ -73,12 +73,16 @@ function handleJump() {
   }
 }
 
-// ✅ Fixed double jump bug by choosing one event listener only
-if ('ontouchstart' in window) {
-  canvas.addEventListener("touchstart", handleJump);
-} else {
-  canvas.addEventListener("mousedown", handleJump);
-}
+// ✅ Tambahkan semua event input: tap, click, dan keyboard (Space)
+canvas.addEventListener("touchstart", handleJump);
+canvas.addEventListener("mousedown", handleJump);
+
+document.addEventListener("keydown", function (e) {
+  if (e.code === "Space") {
+    e.preventDefault(); // Mencegah scroll saat tekan spasi
+    handleJump();
+  }
+});
 
 restartBtn.addEventListener("click", resetGame);
 
