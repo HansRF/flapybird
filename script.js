@@ -58,7 +58,7 @@ let gameStarted = false;
 let birdFrame = 0;
 const pipeGap = 150;
 let pipeInterval = 0;
-let jumpCooldown = false; // prevent double jump
+let jumpCooldown = false;
 
 // Fungsi utama melompat
 function handleJump() {
@@ -113,7 +113,7 @@ function closeBucinPopup() {
 // Spawn pipes
 function spawnPipe() {
   const topY = Math.floor(Math.random() * -150) - 50;
-  pipes.push({ x: canvas.width, y: topY });
+  pipes.push({ x: canvas.width, y: topY, passed: false });
 }
 
 function drawScore(x, y, score) {
@@ -135,13 +135,16 @@ function update() {
       pipeInterval = 0;
     }
 
-    pipes.forEach((pipe, index) => {
+    for (let i = 0; i < pipes.length; i++) {
+      const pipe = pipes[i];
       pipe.x -= 2;
+
       ctx.drawImage(pipeTop, pipe.x, pipe.y);
       ctx.drawImage(pipeBottom, pipe.x, pipe.y + pipeTop.height + pipeGap);
 
       // Score
-      if (pipe.x + pipeTop.width === 50 && !gameOver) {
+      if (!pipe.passed && pipe.x + pipeTop.width < 50) {
+        pipe.passed = true;
         score++;
         audioPoint.currentTime = 0;
         audioPoint.play();
@@ -161,10 +164,12 @@ function update() {
         gameOver = true;
       }
 
+      // Remove pipe offscreen
       if (pipe.x + pipeTop.width < 0) {
-        pipes.splice(index, 1);
+        pipes.splice(i, 1);
+        i--;
       }
-    });
+    }
   }
 
   // Bird physics
@@ -203,7 +208,7 @@ function update() {
     ctx.drawImage(messageImg, canvas.width / 2 - messageImg.width / 2, 180);
   }
 
-  jumpCooldown = false; // reset input flag
+  jumpCooldown = false; // reset input flag tiap frame
   requestAnimationFrame(update);
 }
 
