@@ -49,8 +49,8 @@ const audioDie = new Audio("assets/audio/die.wav");
 // Game state
 let birdY = 150;
 let birdVelocity = 0;
-const gravity = 0.5;
-const jump = -7;
+const gravity = 0.3;
+const jump = -5;
 let pipes = [];
 let score = 0;
 let gameOver = false;
