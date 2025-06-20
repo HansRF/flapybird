@@ -58,9 +58,13 @@ let gameStarted = false;
 let birdFrame = 0;
 const pipeGap = 150;
 let pipeInterval = 0;
+let jumpCooldown = false; // prevent double jump
 
 // Fungsi utama melompat
 function handleJump() {
+  if (jumpCooldown) return;
+  jumpCooldown = true;
+
   if (!gameStarted) {
     gameStarted = true;
     pipes = [];
@@ -73,13 +77,18 @@ function handleJump() {
   }
 }
 
-// ✅ Tambahkan semua event input: tap, click, dan keyboard (Space)
-canvas.addEventListener("touchstart", handleJump);
-canvas.addEventListener("mousedown", handleJump);
-
+// Event input
+canvas.addEventListener("touchstart", (e) => {
+  e.preventDefault();
+  handleJump();
+});
+canvas.addEventListener("mousedown", (e) => {
+  e.preventDefault();
+  handleJump();
+});
 document.addEventListener("keydown", function (e) {
   if (e.code === "Space") {
-    e.preventDefault(); // Mencegah scroll saat tekan spasi
+    e.preventDefault();
     handleJump();
   }
 });
@@ -194,6 +203,7 @@ function update() {
     ctx.drawImage(messageImg, canvas.width / 2 - messageImg.width / 2, 180);
   }
 
+  jumpCooldown = false; // reset input flag
   requestAnimationFrame(update);
 }
 
