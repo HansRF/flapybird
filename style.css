@@ -83,6 +83,13 @@ canvas {
   line-height: 1.8;
 }
 
+#leaderboardStatus {
+  min-height: 1em;
+  color: #d7e89b;
+  font-size: 9px;
+  line-height: 1.8;
+}
+
 #leaderboardList {
   max-width: 360px;
   margin: 20px auto;
@@ -196,7 +203,7 @@ canvas {
   outline: none;
 }
 
- #scoreForm {
+#scoreForm {
   display: grid;
   gap: 10px;
   margin: 18px 0;
@@ -214,6 +221,11 @@ canvas {
 #scoreSaveStatus {
   min-height: 1em;
   font-size: 10px;
+}
+
+.bucin-content button:disabled {
+  cursor: wait;
+  opacity: 0.65;
 }
 
 /* Optional: Pop-up animation with slower transition */

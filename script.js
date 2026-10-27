@@ -1,3 +1,20 @@
+import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
+import {
+  getAuth,
+  signInAnonymously
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
+import {
+  get,
+  getDatabase,
+  limitToLast,
+  onValue,
+  orderByChild,
+  query,
+  ref,
+  set
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+import { firebaseConfig } from "firebase-config.js";
+
 const canvas = document.getElementById("flappyCanvas");
 const ctx = canvas.getContext("2d");
 
@@ -8,14 +25,17 @@ const showLeaderboardBtn = document.getElementById("showLeaderboardBtn");
 const backToGameBtn = document.getElementById("backToGameBtn");
 const leaderboardList = document.getElementById("leaderboardList");
 const leaderboardEmpty = document.getElementById("leaderboardEmpty");
+const leaderboardStatus = document.getElementById("leaderboardStatus");
 const scoreForm = document.getElementById("scoreForm");
 const playerNameInput = document.getElementById("playerName");
 const scoreSaveStatus = document.getElementById("scoreSaveStatus");
 const bucinPopup = document.getElementById("bucinPopup");
 const bucinMessage = document.getElementById("bucinMessage");
 const closePopupBtn = document.getElementById("closePopupBtn");
-const leaderboardStorageKey = "flappyBotLeaderboard";
 const playerNameStorageKey = "flappyBotPlayerName";
+let database = null;
+let playerUid = null;
+let leaderboardEntries = [];
 
 // Load images
 const bg = new Image();
@@ -117,12 +137,6 @@ showLeaderboardBtn.addEventListener("click", showLeaderboard);
 backToGameBtn.addEventListener("click", showGame);
 scoreForm.addEventListener("submit", saveScore);
 
-window.addEventListener("storage", (event) => {
-  if (event.key === leaderboardStorageKey) {
-    renderLeaderboard();
-  }
-});
-
 function showBucinText() {
   bucinMessage.textContent = `Skor kamu: ${score}`;
   scoreSaveStatus.textContent = "";
@@ -147,8 +161,11 @@ function showGame() {
   leaderboardScreen.hidden = true;
   gameScreen.hidden = false;
   gamePaused = false;
-  if (gameOver) bucinPopup.classList.add("show");
-  scheduleUpdate();
+  if (gameOver) {
+    bucinPopup.classList.add("show");
+  } else {
+    scheduleUpdate();
+  }
 }
 
 function scheduleUpdate() {
@@ -159,49 +176,26 @@ function scheduleUpdate() {
   });
 }
 
-function readLeaderboard() {
-  try {
-    const storedScores = localStorage.getItem(leaderboardStorageKey);
-    if (!storedScores) return [];
-
-    const parsedScores = JSON.parse(storedScores);
-    if (!Array.isArray(parsedScores)) {
-      throw new Error("Format data leaderboard tidak valid.");
-    }
-
-    return parsedScores.filter((entry) =>
-      entry &&
-      typeof entry.name === "string" &&
-      Number.isFinite(entry.score) &&
-      typeof entry.date === "string"
-    );
-  } catch (error) {
-    console.error("Leaderboard tidak dapat dibaca.", error);
-    leaderboardEmpty.textContent = "Data leaderboard tidak dapat dibaca. Coba bersihkan data browser untuk situs ini.";
-    return [];
-  }
-}
-
 function renderLeaderboard() {
-  const entries = readLeaderboard()
-    .sort((first, second) => second.score - first.score || first.date.localeCompare(second.date))
+  const entries = leaderboardEntries
+    .sort((first, second) => second.score - first.score || first.createdAt - second.createdAt)
     .slice(0, 10);
 
   leaderboardList.replaceChildren();
   leaderboardEmpty.hidden = entries.length > 0;
 
-  entries.forEach((entry) => {
+  entries.forEach((entry, index) => {
     const item = document.createElement("li");
     const player = document.createElement("span");
     const points = document.createElement("strong");
-    player.textContent = entry.name;
+    player.textContent = `${index + 1}. ${entry.name}`;
     points.textContent = `${entry.score} POIN`;
     item.append(player, points);
     leaderboardList.append(item);
   });
 }
 
-function saveScore(event) {
+async function saveScore(event) {
   event.preventDefault();
   const name = playerNameInput.value.trim();
   if (!name) {
@@ -209,28 +203,84 @@ function saveScore(event) {
     return;
   }
 
-  try {
-    const entries = readLeaderboard();
-    const existingEntry = entries.find(
-      (entry) => entry.name.toLocaleLowerCase() === name.toLocaleLowerCase()
-    );
+  if (!database || !playerUid) {
+    scoreSaveStatus.textContent = "Firebase belum siap. Coba lagi setelah koneksi berhasil.";
+    return;
+  }
 
-    if (existingEntry) {
-      existingEntry.score = Math.max(existingEntry.score, score);
-      if (existingEntry.score === score) {
-        existingEntry.date = new Date().toISOString();
-      }
+  const submitButton = scoreForm.querySelector('button[type="submit"]');
+  submitButton.disabled = true;
+
+  try {
+    const playerScoreRef = ref(database, `scores/${playerUid}`);
+    const existingScore = await get(playerScoreRef);
+    if (existingScore.exists() && existingScore.val().score >= score) {
+      scoreSaveStatus.textContent = "Skor ini belum melewati rekor terbaikmu.";
     } else {
-      entries.push({ name, score, date: new Date().toISOString() });
+      await set(playerScoreRef, {
+        name,
+        score,
+        createdAt: Date.now()
+      });
+      scoreSaveStatus.textContent = "Skor berhasil disimpan!";
     }
 
-    localStorage.setItem(leaderboardStorageKey, JSON.stringify(entries));
-    localStorage.setItem(playerNameStorageKey, name);
-    scoreSaveStatus.textContent = "Skor berhasil disimpan!";
-    renderLeaderboard();
+    try {
+      localStorage.setItem(playerNameStorageKey, name);
+    } catch (error) {
+      console.error("Nama pemain tidak dapat disimpan di browser.", error);
+    }
   } catch (error) {
     console.error("Skor tidak dapat disimpan.", error);
-    scoreSaveStatus.textContent = "Skor gagal disimpan. Periksa pengaturan penyimpanan browser.";
+    scoreSaveStatus.textContent = `Skor gagal disimpan: ${error.message}`;
+  } finally {
+    submitButton.disabled = false;
+  }
+}
+
+async function connectFirebase() {
+  const configValues = [
+    firebaseConfig.apiKey,
+    firebaseConfig.authDomain,
+    firebaseConfig.databaseURL,
+    firebaseConfig.projectId,
+    firebaseConfig.appId
+  ];
+  if (configValues.some((value) => !value || /YOUR_|PASTE_/i.test(value))) {
+    leaderboardStatus.textContent = "Isi konfigurasi Firebase di firebase-config.js untuk mengaktifkan leaderboard global.";
+    return;
+  }
+
+  try {
+    const app = initializeApp(firebaseConfig);
+    database = getDatabase(app);
+    const auth = getAuth(app);
+    const user = auth.currentUser || (await signInAnonymously(auth)).user;
+    playerUid = user.uid;
+
+    const scoresQuery = query(ref(database, "scores"), orderByChild("score"), limitToLast(10));
+    onValue(scoresQuery, (snapshot) => {
+      leaderboardEntries = [];
+      snapshot.forEach((childSnapshot) => {
+        const entry = childSnapshot.val();
+        if (
+          entry &&
+          typeof entry.name === "string" &&
+          Number.isInteger(entry.score) &&
+          Number.isFinite(entry.createdAt)
+        ) {
+          leaderboardEntries.push(entry);
+        }
+      });
+      leaderboardStatus.textContent = "Terhubung — skor diperbarui langsung.";
+      renderLeaderboard();
+    }, (error) => {
+      console.error("Leaderboard Firebase tidak dapat dibaca.", error);
+      leaderboardStatus.textContent = `Leaderboard gagal dimuat: ${error.message}`;
+    });
+  } catch (error) {
+    console.error("Firebase gagal diinisialisasi.", error);
+    leaderboardStatus.textContent = `Firebase gagal terhubung: ${error.message}`;
   }
 }
 
@@ -335,7 +385,7 @@ function update() {
   }
 
   jumpCooldown = false; // reset input flag tiap frame
-  scheduleUpdate();
+  if (!gamePaused) scheduleUpdate();
 }
 
 function resetGame() {
@@ -355,3 +405,4 @@ function resetGame() {
 }
 
 scheduleUpdate();
+connectFirebase();
