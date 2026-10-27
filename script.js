@@ -81,6 +81,8 @@ const gravity = 0.3;
 const jump = -5;
 const initialPipeSpeed = 2;
 const maxPipeSpeed = 5;
+const initialPipeSpacing = 250;
+const spacingIncreasePerSpeed = 60;
 let pipes = [];
 let score = 0;
 let gameOver = false;
@@ -89,8 +91,8 @@ let gamePaused = false;
 let animationFrameId = null;
 let birdFrame = 0;
 const pipeGap = 150;
-let pipeInterval = 0;
 let jumpCooldown = false;
+let distanceSincePipeSpawn = 0;
 
 // Fungsi utama melompat
 function handleJump() {
@@ -101,6 +103,7 @@ function handleJump() {
     gameStarted = true;
     pipes = [];
     spawnPipe();
+    distanceSincePipeSpawn = 0;
   }
   if (!gameOver) {
     birdVelocity = jump;
@@ -306,16 +309,16 @@ function update() {
 
   // Pipes
   if (gameStarted && !gamePaused) {
-    pipeInterval++;
-    const spawnInterval = Math.max(60, 100 - score * 2);
-    if (pipeInterval >= spawnInterval && (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 250)) {
+    const pipeSpeed = Math.min(initialPipeSpeed + score * 0.12, maxPipeSpeed);
+    const pipeSpacing = initialPipeSpacing + (pipeSpeed - initialPipeSpeed) * spacingIncreasePerSpeed;
+    distanceSincePipeSpawn += pipeSpeed;
+    if (distanceSincePipeSpawn >= pipeSpacing) {
       spawnPipe();
-      pipeInterval = 0;
+      distanceSincePipeSpawn = 0;
     }
 
     for (let i = 0; i < pipes.length; i++) {
       const pipe = pipes[i];
-      const pipeSpeed = Math.min(initialPipeSpeed + score * 0.12, maxPipeSpeed);
       pipe.x -= pipeSpeed;
 
       ctx.drawImage(pipeTop, pipe.x, pipe.y);
@@ -399,8 +402,8 @@ function resetGame() {
   gameOver = false;
   gameStarted = false;
   birdFrame = 0;
-  pipeInterval = 0;
   gamePaused = false;
+  distanceSincePipeSpawn = 0;
   bucinPopup.classList.remove("show");
   scoreSaveStatus.textContent = "";
   restartBtn.style.display = "none";
