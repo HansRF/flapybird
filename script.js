@@ -5,7 +5,6 @@ import {
   addDoc,
   query,
   orderBy,
-  limit,
   onSnapshot
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
@@ -181,8 +180,7 @@ function scheduleUpdate() {
 
 function renderLeaderboard() {
   const entries = leaderboardEntries
-    .sort((first, second) => second.score - first.score || first.createdAt - second.createdAt)
-    .slice(0, 10);
+    .sort((first, second) => second.score - first.score || first.createdAt - second.createdAt);
 
   leaderboardList.replaceChildren();
   leaderboardEmpty.hidden = entries.length > 0;
@@ -290,8 +288,7 @@ function connectFirebase() {
 
     const scoresQuery = query(
       collection(db, "scores"),
-      orderBy("score", "desc"),
-      limit(10)
+      orderBy("score", "desc")
     );
 
     onSnapshot(
