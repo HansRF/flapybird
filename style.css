@@ -153,35 +153,20 @@ canvas {
   background-color: #0f380f; /* Soft pink background for the pop-up */
   color: white;
   text-align: center;
-  padding: 30px 40px;
+  padding: 30px 24px;
   border-radius: 20px;
-  width: 80%;
-  max-width: 450px;
+  width: min(450px, calc(100vw - 32px));
+  box-sizing: border-box;
   box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
-  font-family: 'Comic Sans MS', cursive, sans-serif;
-}
-@media (max-width: 750px){
-  .bucin-content{
-    width: 60%;
-  }
+  font-family: inherit;
 }
 .bucin-content h2 {
   font-size: 2.0rem; /* Larger size for the header */
   margin: 0;
 }
-@media (max-width: 750px){
-  .bucin-content h2{
-    font-size: 1.6rem;
-  }
-}
 .bucin-content p {
   font-size: 1.3rem;
   margin: 15px 0;
-}
-@media (max-width: 750px){
-  .bucin-content p{
-    font-size: 1.1rem;
-  }
 }
 .bucin-content button {
   background-color: #306230; /* Lighter pink */

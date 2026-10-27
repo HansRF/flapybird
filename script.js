@@ -28,6 +28,12 @@ const bucinPopup = document.getElementById("bucinPopup");
 const bucinMessage = document.getElementById("bucinMessage");
 const closePopupBtn = document.getElementById("closePopupBtn");
 const playerNameStorageKey = "flappyBotPlayerName";
+const blockedNameTerms = [
+  "anjing", "anjir", "asu", "bangsat", "bajingan", "brengsek",
+  "goblok", "tolol", "kampret", "kontol", "memek", "ngentot",
+  "jancuk", "jancok", "fuck", "shit", "bitch", "bastard",
+  "asshole", "dick", "pussy"
+];
 let db = null;
 let leaderboardEntries = [];
 
@@ -185,11 +191,33 @@ function renderLeaderboard() {
     const item = document.createElement("li");
     const player = document.createElement("span");
     const points = document.createElement("strong");
-    player.textContent = `${index + 1}. ${entry.name}`;
+    const displayedName = containsBlockedNameTerm(entry.name) ? "Pemain" : entry.name;
+    player.textContent = `${index + 1}. ${displayedName}`;
     points.textContent = `${entry.score} POIN`;
     item.append(player, points);
     leaderboardList.append(item);
   });
+}
+
+function containsBlockedNameTerm(name) {
+  const normalizedName = name
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[013457@$!]/g, (character) => ({
+      "0": "o",
+      "1": "i",
+      "3": "e",
+      "4": "a",
+      "5": "s",
+      "7": "t",
+      "@": "a",
+      "$": "s",
+      "!": "i"
+    })[character])
+    .replace(/[^a-z0-9]/g, "");
+
+  return blockedNameTerms.some((term) => normalizedName.includes(term));
 }
 
 async function saveScore(event) {
@@ -198,6 +226,11 @@ async function saveScore(event) {
   const name = playerNameInput.value.trim();
   if (!name) {
     scoreSaveStatus.textContent = "Masukkan nama pemain terlebih dahulu.";
+    return;
+  }
+
+  if (containsBlockedNameTerm(name)) {
+    scoreSaveStatus.textContent = "Nama pemain mengandung kata yang tidak pantas. Silakan pilih nama lain.";
     return;
   }
 
