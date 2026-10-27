@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flappy Retro</title>
+    <title>Flappy Bot</title>
     <link rel="stylesheet" href="style.css" />
     <link
       href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
@@ -13,14 +13,31 @@
   <body>
     <div id="gameContainer">
       <h1 class="title">FLAPPY BOT</h1>
-      <canvas id="flappyCanvas" width="288" height="512"></canvas>
-      <button id="restartBtn">RESTART</button>
-      <!-- Pop-up Bucin yang muncul setelah Game Over -->
-      <div id="bucinPopup" class="bucin-popup hidden">
+      <nav class="page-nav" aria-label="Navigasi game">
+        <button id="showLeaderboardBtn" type="button">🏆 LEADERBOARD</button>
+      </nav>
+      <section id="gameScreen">
+        <canvas id="flappyCanvas" width="288" height="512" aria-label="Permainan Flappy Bot"></canvas>
+        <button id="restartBtn" type="button">MAIN LAGI</button>
+      </section>
+      <section id="leaderboardScreen" hidden>
+        <h2>LEADERBOARD</h2>
+        <p class="leaderboard-note">Skor tersimpan di browser ini dan diperbarui langsung. Bukan ranking global.</p>
+        <ol id="leaderboardList" aria-live="polite"></ol>
+        <p id="leaderboardEmpty">Belum ada skor. Mainkan game dan simpan skor pertamamu!</p>
+        <button id="backToGameBtn" type="button">KEMBALI KE GAME</button>
+      </section>
+      <div id="bucinPopup" class="bucin-popup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
         <div class="bucin-content">
-          <h2>Nice Try</h2>
+          <h2 id="popupTitle">Game Over</h2>
           <p id="bucinMessage">Game Over</p>
-          <button onclick="closeBucinPopup()">Restart</button>
+          <form id="scoreForm">
+            <label for="playerName">Nama pemain</label>
+            <input id="playerName" name="playerName" maxlength="16" autocomplete="nickname" required />
+            <button type="submit">SIMPAN SKOR</button>
+            <p id="scoreSaveStatus" role="status"></p>
+          </form>
+          <button id="closePopupBtn" type="button">MAIN LAGI</button>
         </div>
       </div>
     </div>

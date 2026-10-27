@@ -20,6 +20,7 @@ body {
   padding: 20px;
   border-radius: 12px;
   box-shadow: 0 0 20px #9bbc0f;
+  width: min(440px, calc(100vw - 72px));
 }
 
 .title {
@@ -31,29 +32,96 @@ body {
 
 canvas {
   display: block;
-  width: 360px;
+  width: 100%;
   max-width: calc(100vw - 80px);
   height: auto;
   margin: 0 auto;
   border: 4px solid #8bac0f;
   image-rendering: pixelated;
 }
+
+.page-nav {
+  margin-bottom: 14px;
+}
+
+.page-nav button,
+#backToGameBtn,
+#restartBtn {
+  padding: 10px 14px;
+  background-color: #306230;
+  color: #fff;
+  border: 2px solid #8bac0f;
+  border-radius: 8px;
+  font: inherit;
+  font-size: 10px;
+  cursor: pointer;
+}
+
+.page-nav button:hover,
+#backToGameBtn:hover,
+#restartBtn:hover {
+  background-color: #8bac0f;
+  color: #0f380f;
+}
+
+#leaderboardScreen {
+  min-height: 512px;
+  box-sizing: border-box;
+  padding: 18px 8px;
+}
+
+#leaderboardScreen h2 {
+  color: #fff;
+  font-size: 14px;
+}
+
+.leaderboard-note {
+  max-width: 360px;
+  margin: 16px auto;
+  color: #d7e89b;
+  font-size: 9px;
+  line-height: 1.8;
+}
+
+#leaderboardList {
+  max-width: 360px;
+  margin: 20px auto;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+
+#leaderboardList li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 10px;
+  border-bottom: 1px solid #8bac0f;
+  color: #fff;
+  font-size: 10px;
+}
+
+#leaderboardList li:first-child {
+  color: #f7e36d;
+}
+
+#leaderboardList strong {
+  color: #9bbc0f;
+  white-space: nowrap;
+}
+
+#leaderboardEmpty {
+  color: #d7e89b;
+  font-size: 10px;
+  line-height: 1.8;
+}
+
 #restartBtn {
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  padding: 10px 20px;
-  font-size: 20px;
-  background-color: #306230;
-  color: white;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
   display: none;
-}
-#restartBtn:hover {
-  background-color: #8bac0f;
 }
 
 /* Pop-up Bucin */
@@ -111,10 +179,11 @@ canvas {
 .bucin-content button {
   background-color: #306230; /* Lighter pink */
   color: white;
-  font-size: 1.2rem;
-  padding: 12px 25px;
-  border: none;
-  border-radius: 15px;
+  font: inherit;
+  font-size: 10px;
+  padding: 12px 16px;
+  border: 2px solid #8bac0f;
+  border-radius: 8px;
   cursor: pointer;
   transition: background-color 0.3s ease;
 }
@@ -125,6 +194,26 @@ canvas {
 
 .bucin-content button:focus {
   outline: none;
+}
+
+ #scoreForm {
+  display: grid;
+  gap: 10px;
+  margin: 18px 0;
+  font-size: 10px;
+}
+
+#playerName {
+  padding: 10px;
+  border: 2px solid #8bac0f;
+  border-radius: 6px;
+  font: inherit;
+  text-align: center;
+}
+
+#scoreSaveStatus {
+  min-height: 1em;
+  font-size: 10px;
 }
 
 /* Optional: Pop-up animation with slower transition */
@@ -146,4 +235,3 @@ canvas {
 .bucin-content {
   animation: popUpAnim 0.7s ease-out; /* Slower pop-up effect */
 }
-

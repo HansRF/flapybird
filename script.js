@@ -2,6 +2,20 @@ const canvas = document.getElementById("flappyCanvas");
 const ctx = canvas.getContext("2d");
 
 const restartBtn = document.getElementById("restartBtn");
+const gameScreen = document.getElementById("gameScreen");
+const leaderboardScreen = document.getElementById("leaderboardScreen");
+const showLeaderboardBtn = document.getElementById("showLeaderboardBtn");
+const backToGameBtn = document.getElementById("backToGameBtn");
+const leaderboardList = document.getElementById("leaderboardList");
+const leaderboardEmpty = document.getElementById("leaderboardEmpty");
+const scoreForm = document.getElementById("scoreForm");
+const playerNameInput = document.getElementById("playerName");
+const scoreSaveStatus = document.getElementById("scoreSaveStatus");
+const bucinPopup = document.getElementById("bucinPopup");
+const bucinMessage = document.getElementById("bucinMessage");
+const closePopupBtn = document.getElementById("closePopupBtn");
+const leaderboardStorageKey = "flappyBotLeaderboard";
+const playerNameStorageKey = "flappyBotPlayerName";
 
 // Load images
 const bg = new Image();
@@ -51,10 +65,14 @@ let birdY = 150;
 let birdVelocity = 0;
 const gravity = 0.3;
 const jump = -5;
+const initialPipeSpeed = 2;
+const maxPipeSpeed = 5;
 let pipes = [];
 let score = 0;
 let gameOver = false;
 let gameStarted = false;
+let gamePaused = false;
+let animationFrameId = null;
 let birdFrame = 0;
 const pipeGap = 150;
 let pipeInterval = 0;
@@ -94,20 +112,126 @@ document.addEventListener("keydown", function (e) {
 });
 
 restartBtn.addEventListener("click", resetGame);
+closePopupBtn.addEventListener("click", resetGame);
+showLeaderboardBtn.addEventListener("click", showLeaderboard);
+backToGameBtn.addEventListener("click", showGame);
+scoreForm.addEventListener("submit", saveScore);
 
-// Pop-up Bucin
-function showBucinText() {
-  const bucinPopup = document.getElementById('bucinPopup');
-  const bucinMessage = document.getElementById('bucinMessage');
-  if (gameOver) {
-    bucinMessage.textContent = "Game Over";
+window.addEventListener("storage", (event) => {
+  if (event.key === leaderboardStorageKey) {
+    renderLeaderboard();
   }
-  bucinPopup.classList.add('show');
+});
+
+function showBucinText() {
+  bucinMessage.textContent = `Skor kamu: ${score}`;
+  scoreSaveStatus.textContent = "";
+  bucinPopup.classList.add("show");
+  restartBtn.style.display = "block";
+  try {
+    playerNameInput.value = localStorage.getItem(playerNameStorageKey) || "";
+  } catch (error) {
+    console.error("Nama pemain tidak dapat dimuat.", error);
+  }
 }
 
-function closeBucinPopup() {
-  const bucinPopup = document.getElementById('bucinPopup');
-  bucinPopup.classList.remove('show');
+function showLeaderboard() {
+  gamePaused = true;
+  gameScreen.hidden = true;
+  leaderboardScreen.hidden = false;
+  bucinPopup.classList.remove("show");
+  renderLeaderboard();
+}
+
+function showGame() {
+  leaderboardScreen.hidden = true;
+  gameScreen.hidden = false;
+  gamePaused = false;
+  if (gameOver) bucinPopup.classList.add("show");
+  scheduleUpdate();
+}
+
+function scheduleUpdate() {
+  if (animationFrameId !== null) return;
+  animationFrameId = requestAnimationFrame(() => {
+    animationFrameId = null;
+    update();
+  });
+}
+
+function readLeaderboard() {
+  try {
+    const storedScores = localStorage.getItem(leaderboardStorageKey);
+    if (!storedScores) return [];
+
+    const parsedScores = JSON.parse(storedScores);
+    if (!Array.isArray(parsedScores)) {
+      throw new Error("Format data leaderboard tidak valid.");
+    }
+
+    return parsedScores.filter((entry) =>
+      entry &&
+      typeof entry.name === "string" &&
+      Number.isFinite(entry.score) &&
+      typeof entry.date === "string"
+    );
+  } catch (error) {
+    console.error("Leaderboard tidak dapat dibaca.", error);
+    leaderboardEmpty.textContent = "Data leaderboard tidak dapat dibaca. Coba bersihkan data browser untuk situs ini.";
+    return [];
+  }
+}
+
+function renderLeaderboard() {
+  const entries = readLeaderboard()
+    .sort((first, second) => second.score - first.score || first.date.localeCompare(second.date))
+    .slice(0, 10);
+
+  leaderboardList.replaceChildren();
+  leaderboardEmpty.hidden = entries.length > 0;
+
+  entries.forEach((entry) => {
+    const item = document.createElement("li");
+    const player = document.createElement("span");
+    const points = document.createElement("strong");
+    player.textContent = entry.name;
+    points.textContent = `${entry.score} POIN`;
+    item.append(player, points);
+    leaderboardList.append(item);
+  });
+}
+
+function saveScore(event) {
+  event.preventDefault();
+  const name = playerNameInput.value.trim();
+  if (!name) {
+    scoreSaveStatus.textContent = "Masukkan nama pemain terlebih dahulu.";
+    return;
+  }
+
+  try {
+    const entries = readLeaderboard();
+    const existingEntry = entries.find(
+      (entry) => entry.name.toLocaleLowerCase() === name.toLocaleLowerCase()
+    );
+
+    if (existingEntry) {
+      existingEntry.score = Math.max(existingEntry.score, score);
+      if (existingEntry.score === score) {
+        existingEntry.date = new Date().toISOString();
+      }
+    } else {
+      entries.push({ name, score, date: new Date().toISOString() });
+    }
+
+    localStorage.setItem(leaderboardStorageKey, JSON.stringify(entries));
+    localStorage.setItem(playerNameStorageKey, name);
+    scoreSaveStatus.textContent = "Skor berhasil disimpan!";
+    renderLeaderboard();
+  } catch (error) {
+    console.error("Skor tidak dapat disimpan.", error);
+    scoreSaveStatus.textContent = "Skor gagal disimpan. Periksa pengaturan penyimpanan browser.";
+  }
 }
 
 // Spawn pipes
@@ -128,16 +252,18 @@ function update() {
   ctx.drawImage(bg, 0, 0);
 
   // Pipes
-  if (gameStarted) {
+  if (gameStarted && !gamePaused) {
     pipeInterval++;
-    if (pipeInterval >= 100 && (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 250)) {
+    const spawnInterval = Math.max(60, 100 - score * 2);
+    if (pipeInterval >= spawnInterval && (pipes.length === 0 || pipes[pipes.length - 1].x < canvas.width - 250)) {
       spawnPipe();
       pipeInterval = 0;
     }
 
     for (let i = 0; i < pipes.length; i++) {
       const pipe = pipes[i];
-      pipe.x -= 2;
+      const pipeSpeed = Math.min(initialPipeSpeed + score * 0.12, maxPipeSpeed);
+      pipe.x -= pipeSpeed;
 
       ctx.drawImage(pipeTop, pipe.x, pipe.y);
       ctx.drawImage(pipeBottom, pipe.x, pipe.y + pipeTop.height + pipeGap);
@@ -173,13 +299,13 @@ function update() {
   }
 
   // Bird physics
-  if (gameStarted && !gameOver) {
+  if (gameStarted && !gameOver && !gamePaused) {
     birdVelocity += gravity;
     birdY += birdVelocity;
   }
 
   // Ground collision
-  if (birdY + 24 >= canvas.height - base.height) {
+  if (!gamePaused && birdY + 24 >= canvas.height - base.height) {
     if (!gameOver) {
       audioHit.play();
       setTimeout(() => audioDie.play(), 200);
@@ -209,7 +335,7 @@ function update() {
   }
 
   jumpCooldown = false; // reset input flag tiap frame
-  requestAnimationFrame(update);
+  scheduleUpdate();
 }
 
 function resetGame() {
@@ -221,8 +347,11 @@ function resetGame() {
   gameStarted = false;
   birdFrame = 0;
   pipeInterval = 0;
+  gamePaused = false;
+  bucinPopup.classList.remove("show");
+  scoreSaveStatus.textContent = "";
   restartBtn.style.display = "none";
-  update();
+  scheduleUpdate();
 }
 
-update();
+scheduleUpdate();
