@@ -1,18 +1,13 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-app.js";
 import {
-  getAuth,
-  signInAnonymously
-} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-auth.js";
-import {
-  get,
-  getDatabase,
-  limitToLast,
-  onValue,
-  orderByChild,
+  getFirestore,
+  collection,
+  addDoc,
   query,
-  ref,
-  set
-} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
+  orderBy,
+  limit,
+  onSnapshot
+} from "https://www.gstatic.com/firebasejs/12.5.0/firebase-firestore.js";
 import { firebaseConfig } from "./firebase-config.js";
 
 const canvas = document.getElementById("flappyCanvas");
@@ -33,8 +28,7 @@ const bucinPopup = document.getElementById("bucinPopup");
 const bucinMessage = document.getElementById("bucinMessage");
 const closePopupBtn = document.getElementById("closePopupBtn");
 const playerNameStorageKey = "flappyBotPlayerName";
-let database = null;
-let playerUid = null;
+let db = null;
 let leaderboardEntries = [];
 
 // Load images
@@ -197,14 +191,20 @@ function renderLeaderboard() {
 
 async function saveScore(event) {
   event.preventDefault();
+
   const name = playerNameInput.value.trim();
   if (!name) {
     scoreSaveStatus.textContent = "Masukkan nama pemain terlebih dahulu.";
     return;
   }
 
-  if (!database || !playerUid) {
-    scoreSaveStatus.textContent = "Firebase belum siap. Coba lagi setelah koneksi berhasil.";
+  if (!db) {
+    scoreSaveStatus.textContent = "Firestore belum siap. Periksa konfigurasi Firebase.";
+    return;
+  }
+
+  if (!Number.isInteger(score) || score < 0 || score > 100000) {
+    scoreSaveStatus.textContent = "Skor tidak valid.";
     return;
   }
 
@@ -212,18 +212,13 @@ async function saveScore(event) {
   submitButton.disabled = true;
 
   try {
-    const playerScoreRef = ref(database, `scores/${playerUid}`);
-    const existingScore = await get(playerScoreRef);
-    if (existingScore.exists() && existingScore.val().score >= score) {
-      scoreSaveStatus.textContent = "Skor ini belum melewati rekor terbaikmu.";
-    } else {
-      await set(playerScoreRef, {
-        name,
-        score,
-        createdAt: Date.now()
-      });
-      scoreSaveStatus.textContent = "Skor berhasil disimpan!";
-    }
+    await addDoc(collection(db, "scores"), {
+      name: name,
+      score: score,
+      createdAt: Date.now()
+    });
+
+    scoreSaveStatus.textContent = "Skor berhasil disimpan!";
 
     try {
       localStorage.setItem(playerNameStorageKey, name);
@@ -238,49 +233,57 @@ async function saveScore(event) {
   }
 }
 
-async function connectFirebase() {
+function connectFirebase() {
   const configValues = [
     firebaseConfig.apiKey,
-    firebaseConfig.authDomain,
-    firebaseConfig.databaseURL,
     firebaseConfig.projectId,
     firebaseConfig.appId
   ];
-  if (configValues.some((value) => !value || /YOUR_|PASTE_/i.test(value))) {
-    leaderboardStatus.textContent = "Isi konfigurasi Firebase di firebase-config.js untuk mengaktifkan leaderboard global.";
+
+  if (configValues.some((value) =>
+    !value || /YOUR_|PASTE_|GANTI_/i.test(value)
+  )) {
+    leaderboardStatus.textContent =
+      "Isi konfigurasi Firebase asli di firebase-config.js.";
     return;
   }
 
   try {
     const app = initializeApp(firebaseConfig);
-    database = getDatabase(app);
-    const auth = getAuth(app);
-    const user = auth.currentUser || (await signInAnonymously(auth)).user;
-    playerUid = user.uid;
+    db = getFirestore(app);
 
-    const scoresQuery = query(ref(database, "scores"), orderByChild("score"), limitToLast(10));
-    onValue(scoresQuery, (snapshot) => {
-      leaderboardEntries = [];
-      snapshot.forEach((childSnapshot) => {
-        const entry = childSnapshot.val();
-        if (
-          entry &&
-          typeof entry.name === "string" &&
-          Number.isInteger(entry.score) &&
-          Number.isFinite(entry.createdAt)
-        ) {
-          leaderboardEntries.push(entry);
-        }
-      });
-      leaderboardStatus.textContent = "Terhubung — skor diperbarui langsung.";
-      renderLeaderboard();
-    }, (error) => {
-      console.error("Leaderboard Firebase tidak dapat dibaca.", error);
-      leaderboardStatus.textContent = `Leaderboard gagal dimuat: ${error.message}`;
-    });
+    const scoresQuery = query(
+      collection(db, "scores"),
+      orderBy("score", "desc"),
+      limit(10)
+    );
+
+    onSnapshot(
+      scoresQuery,
+      (snapshot) => {
+        leaderboardEntries = snapshot.docs
+          .map((document) => ({ id: document.id, ...document.data() }))
+          .filter((entry) =>
+            typeof entry.name === "string" &&
+            Number.isInteger(entry.score) &&
+            entry.score >= 0 &&
+            Number.isFinite(entry.createdAt)
+          );
+
+        leaderboardStatus.textContent =
+          "skor diperbarui langsung.";
+        renderLeaderboard();
+      },
+      (error) => {
+        console.error("Leaderboard Firestore tidak dapat dibaca.", error);
+        leaderboardStatus.textContent =
+          `Leaderboard gagal dimuat: ${error.message}`;
+      }
+    );
   } catch (error) {
     console.error("Firebase gagal diinisialisasi.", error);
-    leaderboardStatus.textContent = `Firebase gagal terhubung: ${error.message}`;
+    leaderboardStatus.textContent =
+      `Firebase gagal terhubung: ${error.message}`;
   }
 }
 
