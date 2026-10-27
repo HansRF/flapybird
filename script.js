@@ -13,7 +13,7 @@ import {
   ref,
   set
 } from "https://www.gstatic.com/firebasejs/12.5.0/firebase-database.js";
-import { firebaseConfig } from "firebase-config.js";
+import { firebaseConfig } from "./firebase-config.js";
 
 const canvas = document.getElementById("flappyCanvas");
 const ctx = canvas.getContext("2d");
