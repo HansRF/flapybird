@@ -8,7 +8,8 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh;
+  min-height: 100vh;
+  box-sizing: border-box;
   user-select: none;
 }
 
@@ -30,8 +31,12 @@ body {
 
 canvas {
   display: block;
+  width: 360px;
+  max-width: calc(100vw - 80px);
+  height: auto;
   margin: 0 auto;
   border: 4px solid #8bac0f;
+  image-rendering: pixelated;
 }
 #restartBtn {
   position: absolute;
@@ -141,5 +146,4 @@ canvas {
 .bucin-content {
   animation: popUpAnim 0.7s ease-out; /* Slower pop-up effect */
 }
-
 
