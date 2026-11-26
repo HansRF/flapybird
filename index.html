@@ -74,7 +74,12 @@
           </aside>
         </section>
 
-        <section id="leaderboardScreen" class="leaderboard-panel" aria-labelledby="leaderboardTitle" hidden>
+        <section
+          id="leaderboardScreen"
+          class="leaderboard-panel"
+          aria-labelledby="leaderboardTitle"
+          hidden
+        >
           <div class="leaderboard-heading">
             <div>
               <p class="eyebrow">KOMPETISI</p>
@@ -87,7 +92,7 @@
             Menghubungkan ke Firebase...
           </p>
           <ol id="leaderboardList" aria-live="polite"></ol>
-          <p id="leaderboardEmpty" class="empty-state">
+          <p id="leaderboardEmpty" class="empty-state" hidden>
             Belum ada skor. Mainkan game dan simpan skor pertamamu!
           </p>
           <button id="backToGameBtn" class="button button-quiet" type="button">
@@ -102,7 +107,7 @@
       </footer>
 
       <div
-        id="bucinPopup"
+        id="scorePopup"
         class="score-popup"
         role="dialog"
         aria-modal="true"
@@ -112,7 +117,7 @@
           <span class="dialog-icon" aria-hidden="true">✦</span>
           <p class="eyebrow">SESI SELESAI</p>
           <h2 id="popupTitle">Game Over</h2>
-          <p id="bucinMessage" class="score-result">Game Over</p>
+          <p id="scoreMessage" class="score-result">Game Over</p>
           <form id="scoreForm">
             <label for="playerName">Simpan skor ke leaderboard</label>
             <input

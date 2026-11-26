@@ -23,8 +23,8 @@ const leaderboardStatus = document.getElementById("leaderboardStatus");
 const scoreForm = document.getElementById("scoreForm");
 const playerNameInput = document.getElementById("playerName");
 const scoreSaveStatus = document.getElementById("scoreSaveStatus");
-const bucinPopup = document.getElementById("bucinPopup");
-const bucinMessage = document.getElementById("bucinMessage");
+const scorePopup = document.getElementById("scorePopup");
+const scoreMessage = document.getElementById("scoreMessage");
 const closePopupBtn = document.getElementById("closePopupBtn");
 const playerNameStorageKey = "flappyBotPlayerName";
 const blockedNameTerms = [
@@ -35,6 +35,7 @@ const blockedNameTerms = [
 ];
 let db = null;
 let leaderboardEntries = [];
+let leaderboardLoaded = false;
 
 // Load images
 const bg = new Image();
@@ -139,10 +140,10 @@ showLeaderboardBtn.addEventListener("click", showLeaderboard);
 backToGameBtn.addEventListener("click", showGame);
 scoreForm.addEventListener("submit", saveScore);
 
-function showBucinText() {
-  bucinMessage.textContent = `Skor kamu: ${score}`;
+function showScorePopup() {
+  scoreMessage.textContent = `Skor kamu: ${score}`;
   scoreSaveStatus.textContent = "";
-  bucinPopup.classList.add("show");
+  scorePopup.classList.add("show");
   restartBtn.style.display = "block";
   try {
     playerNameInput.value = localStorage.getItem(playerNameStorageKey) || "";
@@ -155,7 +156,7 @@ function showLeaderboard() {
   gamePaused = true;
   gameScreen.hidden = true;
   leaderboardScreen.hidden = false;
-  bucinPopup.classList.remove("show");
+  scorePopup.classList.remove("show");
   renderLeaderboard();
 }
 
@@ -164,7 +165,7 @@ function showGame() {
   gameScreen.hidden = false;
   gamePaused = false;
   if (gameOver) {
-    bucinPopup.classList.add("show");
+    scorePopup.classList.add("show");
   } else {
     scheduleUpdate();
   }
@@ -183,7 +184,7 @@ function renderLeaderboard() {
     .sort((first, second) => second.score - first.score || first.createdAt - second.createdAt);
 
   leaderboardList.replaceChildren();
-  leaderboardEmpty.hidden = entries.length > 0;
+  leaderboardEmpty.hidden = !leaderboardLoaded || entries.length > 0;
 
   entries.forEach((entry, index) => {
     const item = document.createElement("li");
@@ -308,6 +309,7 @@ function connectFirebase() {
             Number.isFinite(entry.createdAt)
           );
 
+        leaderboardLoaded = true;
         leaderboardStatus.textContent =
           "skor diperbarui langsung.";
         renderLeaderboard();
@@ -417,7 +419,7 @@ function update() {
     ctx.drawImage(gameOverImg, canvas.width / 2 - gameOverImg.width / 2, 100);
     drawScore(canvas.width / 2 - 20, 300, score);
     restartBtn.style.display = "block";
-    showBucinText();
+    showScorePopup();
     return;
   }
 
@@ -439,7 +441,7 @@ function resetGame() {
   birdFrame = 0;
   gamePaused = false;
   distanceSincePipeSpawn = 0;
-  bucinPopup.classList.remove("show");
+  scorePopup.classList.remove("show");
   scoreSaveStatus.textContent = "";
   restartBtn.style.display = "none";
   scheduleUpdate();
