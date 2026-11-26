@@ -268,17 +268,22 @@ async function saveScore(event) {
 }
 
 function connectFirebase() {
-  const configValues = [
+  const requiredConfigValues = [
     firebaseConfig.apiKey,
+    firebaseConfig.authDomain,
     firebaseConfig.projectId,
+    firebaseConfig.storageBucket,
+    firebaseConfig.messagingSenderId,
     firebaseConfig.appId
   ];
 
-  if (configValues.some((value) =>
-    !value || /YOUR_|PASTE_|GANTI_/i.test(value)
+  if (requiredConfigValues.some((value) =>
+    typeof value !== "string" ||
+    !value.trim() ||
+    /YOUR_|PASTE_|GANTI_|REPLACE_ME/i.test(value)
   )) {
     leaderboardStatus.textContent =
-      "Isi konfigurasi Firebase asli di firebase-config.js.";
+      "Leaderboard belum aktif. Isi semua nilai konfigurasi Firebase di firebase-config.js.";
     return;
   }
 

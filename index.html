@@ -3,42 +3,132 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Flappy Bot</title>
-    <link rel="stylesheet" href="style.css" />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap"
-      rel="stylesheet"
+    <meta
+      name="description"
+      content="Template game Flappy Bot dengan leaderboard Firebase yang siap dikustomisasi."
     />
+    <meta name="theme-color" content="#101812" />
+    <title>Flappy Bot — Game Template</title>
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <div id="gameContainer">
-      <h1 class="title">FLAPPY BOT</h1>
-      <nav class="page-nav" aria-label="Navigasi game">
-        <button id="showLeaderboardBtn" type="button">🏆 LEADERBOARD</button>
-      </nav>
-      <section id="gameScreen">
-        <canvas id="flappyCanvas" width="288" height="512" aria-label="Permainan Flappy Bot"></canvas>
-        <button id="restartBtn" type="button">MAIN LAGI</button>
-      </section>
-      <section id="leaderboardScreen" hidden>
-        <h2>LEADERBOARD</h2>
-        <p class="leaderboard-note">Leaderboard global</p>
-        <p id="leaderboardStatus" role="status">Menghubungkan ke Firebase...</p>
-        <ol id="leaderboardList" aria-live="polite"></ol>
-        <p id="leaderboardEmpty">Belum ada skor. Mainkan game dan simpan skor pertamamu!</p>
-        <button id="backToGameBtn" type="button">KEMBALI KE GAME</button>
-      </section>
-      <div id="bucinPopup" class="bucin-popup" role="dialog" aria-modal="true" aria-labelledby="popupTitle">
-        <div class="bucin-content">
+      <header class="site-header">
+        <a class="brand" href="#" aria-label="Flappy Bot, beranda">
+          <span class="brand-mark" aria-hidden="true">F</span>
+          <span>FLAPPY<span class="brand-accent">BOT</span></span>
+        </a>
+        <nav class="page-nav" aria-label="Navigasi game">
+          <button id="showLeaderboardBtn" class="button button-quiet" type="button">
+            <span aria-hidden="true">🏆</span> Leaderboard
+          </button>
+        </nav>
+      </header>
+
+      <main>
+        <section class="intro" aria-labelledby="pageTitle">
+          <p class="eyebrow">ARCADE MINI GAME</p>
+          <h1 id="pageTitle">Terbang sejauh mungkin.</h1>
+          <p class="intro-copy">
+            Hindari rintangan, kumpulkan skor, dan tantang temanmu.
+          </p>
+        </section>
+
+        <section id="gameScreen" class="game-layout" aria-label="Permainan Flappy Bot">
+          <div class="game-panel">
+            <div class="panel-topline">
+              <span class="live-indicator" aria-hidden="true"></span>
+              <span>SIAP BERMAIN?</span>
+              <span class="game-tag">FLAPPY BOT</span>
+            </div>
+            <div class="game-stage">
+              <canvas
+                id="flappyCanvas"
+                width="288"
+                height="512"
+                aria-label="Permainan Flappy Bot. Tekan spasi atau ketuk untuk terbang."
+              ></canvas>
+              <button id="restartBtn" class="button button-primary" type="button">
+                Main lagi
+              </button>
+            </div>
+            <div class="game-hint">
+              <span class="key-hint" aria-hidden="true">SPACE</span>
+              <span>Tekan spasi atau ketuk layar untuk terbang</span>
+            </div>
+          </div>
+
+          <aside class="side-panel" aria-label="Tentang game">
+            <div class="side-panel-icon" aria-hidden="true">✦</div>
+            <p class="eyebrow">CARA BERMAIN</p>
+            <h2>Jaga ritmemu.</h2>
+            <p>
+              Terbang melewati pipa tanpa menyentuhnya. Setiap pipa yang berhasil
+              dilewati menambah satu poin.
+            </p>
+            <div class="side-panel-divider"></div>
+            <p class="side-panel-note">
+              <span aria-hidden="true">↗</span>
+              Skor terbaikmu bisa dibagikan di leaderboard.
+            </p>
+          </aside>
+        </section>
+
+        <section id="leaderboardScreen" class="leaderboard-panel" aria-labelledby="leaderboardTitle" hidden>
+          <div class="leaderboard-heading">
+            <div>
+              <p class="eyebrow">KOMPETISI</p>
+              <h2 id="leaderboardTitle">Leaderboard</h2>
+              <p class="leaderboard-note">Lihat siapa yang paling jago terbang.</p>
+            </div>
+            <span class="leaderboard-trophy" aria-hidden="true">🏆</span>
+          </div>
+          <p id="leaderboardStatus" class="status-message" role="status">
+            Menghubungkan ke Firebase...
+          </p>
+          <ol id="leaderboardList" aria-live="polite"></ol>
+          <p id="leaderboardEmpty" class="empty-state">
+            Belum ada skor. Mainkan game dan simpan skor pertamamu!
+          </p>
+          <button id="backToGameBtn" class="button button-quiet" type="button">
+            <span aria-hidden="true">←</span> Kembali ke game
+          </button>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span>FLAPPY BOT <span aria-hidden="true">·</span> GAME TEMPLATE</span>
+        <span>Dibuat untuk dimainkan berulang kali.</span>
+      </footer>
+
+      <div
+        id="bucinPopup"
+        class="score-popup"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="popupTitle"
+      >
+        <div class="score-dialog">
+          <span class="dialog-icon" aria-hidden="true">✦</span>
+          <p class="eyebrow">SESI SELESAI</p>
           <h2 id="popupTitle">Game Over</h2>
-          <p id="bucinMessage">Game Over</p>
+          <p id="bucinMessage" class="score-result">Game Over</p>
           <form id="scoreForm">
-            <label for="playerName">Nama pemain</label>
-            <input id="playerName" name="playerName" maxlength="16" autocomplete="nickname" required />
-            <button type="submit">SIMPAN SKOR</button>
-            <p id="scoreSaveStatus" role="status"></p>
+            <label for="playerName">Simpan skor ke leaderboard</label>
+            <input
+              id="playerName"
+              name="playerName"
+              maxlength="16"
+              autocomplete="nickname"
+              placeholder="Nama pemain"
+              required
+            />
+            <button class="button button-primary" type="submit">Simpan skor</button>
+            <p id="scoreSaveStatus" class="status-message" role="status"></p>
           </form>
-          <button id="closePopupBtn" type="button">MAIN LAGI</button>
+          <button id="closePopupBtn" class="button button-quiet" type="button">
+            Main lagi
+          </button>
         </div>
       </div>
     </div>

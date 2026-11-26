@@ -1,8 +1,8 @@
 export const firebaseConfig = {
-  apiKey: "AIzaSyB6Cs9YTLc_HDZClE3v88DjWHC3xADNEiw",
-  authDomain: "kelola-nilai.firebaseapp.com",
-  projectId: "kelola-nilai",
-  storageBucket: "kelola-nilai.firebasestorage.app",
-  messagingSenderId: "729379708769",
-  appId: "1:729379708769:web:27d99cee90b7195e43ef20",
+  apiKey: "YOUR_FIREBASE_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.firebasestorage.app",
+  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+  appId: "YOUR_FIREBASE_APP_ID",
 };
